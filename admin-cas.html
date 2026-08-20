@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin. de CAS | Fedea</title>
+  <link rel="stylesheet" href="design-system.css">
+  <style>
+    :root { --page-bg: #ffffff; --panel-border: #d5d9d5; --filter-bg: #f3f3f3; --table-head: #ececea; --row-selected: #f4f5eb; --debit: #909b39; --credit: #ed2b91; --shell-green: #4d5a2f; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--fd-color-text); background: var(--page-bg); font-family: var(--fd-font-family); }
+    button, input, select { font: inherit; }
+
+    .app-shell { min-height: 100vh; background: var(--fd-color-white); }
+    .app-topbar { display: flex; align-items: center; justify-content: space-between; height: 75px; padding: 0 26px; color: var(--fd-color-white); background: var(--shell-green); }
+    .brand { display: flex; align-items: center; gap: 18px; }
+    .brand__logo { display: block; width: auto; height: 37px; }
+    .exchange { display: flex; align-items: center; gap: 14px; }
+    .exchange__rates { display: flex; height: 46px; color: var(--fd-color-white); border: 1px solid rgba(229, 224, 222, .65); border-radius: 4px; }
+    .exchange__rate { display: flex; min-width: 72px; flex-direction: column; justify-content: center; padding: 0 10px; font-size: 12px; line-height: 1.15; }
+    .exchange__rate + .exchange__rate { border-left: 1px solid rgba(229, 224, 222, .65); }
+    .exchange__label { color: rgba(229, 224, 222, .9); font-size: 10px; text-transform: uppercase; }
+    .exchange__value { font-size: 14px; }
+    .exchange__settings { display: block; width: 27px; height: 27px; }
+    .user-context { display: flex; align-items: center; gap: 20px; text-align: right; }
+    .user-context__name { display: block; font-size: 16px; font-weight: 600; }
+    .user-context__role { display: block; font-size: 11px; }
+    .user-context__points { display: block; color: var(--fd-color-brand-lime); font-size: 9px; }
+    .user-context__bell { position: relative; display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; background: rgba(255,255,255,.25); }
+    .user-context__bell img { display: block; width: 18px; height: 23px; }
+    .user-context__badge { position: absolute; top: -7px; right: -6px; display: grid; width: 24px; height: 20px; place-items: center; border-radius: 10px; background: #ff4d5a; font-size: 10px; }
+    .user-context__avatar { display: block; width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+    .app-sidebar { position: fixed; z-index: 2; top: 75px; bottom: 0; left: 0; display: flex; width: 74px; flex-direction: column; align-items: center; gap: 19px; padding-top: 14px; color: var(--fd-color-white); background: #000000; transition: width 180ms ease; }
+    .app-sidebar.is-open { width: 213px; align-items: stretch; }
+    .sidebar-icon { display: flex; width: 64px; height: 38px; align-items: center; justify-content: center; gap: 12px; margin: 0 5px; padding: 0 12px; border: 0; border-radius: 5px; color: var(--fd-color-white); background: transparent; cursor: pointer; }
+    .app-sidebar.is-open .sidebar-icon { width: calc(100% - 10px); justify-content: flex-start; margin: 0 5px; }
+    .sidebar-icon img { display: block; flex: 0 0 auto; width: 28.5px; height: 27px; object-fit: contain; opacity: .75; filter: brightness(0) invert(1); }
+    #sidebar-toggle > img { transform: rotate(-90deg); }
+    .sidebar-icon--active { background: var(--shell-green); }
+    .sidebar-icon--active img { opacity: 1; }
+    .sidebar-icon__label { display: none; flex: 1; font-size: 14px; text-align: left; white-space: nowrap; }
+    .app-sidebar.is-open .sidebar-icon__label { display: inline; }
+    .sidebar-icon .sidebar-icon__chevron { display: none; width: 12px; height: 12px; object-fit: contain; }
+    .app-sidebar.is-open .sidebar-icon__chevron { display: inline; }
+    .app-main { min-height: calc(100vh - 75px); margin-left: 74px; transition: margin-left 180ms ease; }
+    .app-main.menu-open { margin-left: 213px; }
+    .breadcrumb { display: flex; height: 64px; align-items: center; gap: 10px; padding: 0 20px; color: #aab09b; font-size: 12px; }
+    .breadcrumb__home { width: 17px; height: 18px; opacity: .5; filter: brightness(0) invert(0.55); }
+    .breadcrumb__separator { color: #aab09b; font-size: 20px; }
+    .breadcrumb__section { display: inline-flex; align-items: center; gap: 7px; }
+    .breadcrumb__chevron { width: 9px; height: 7px; opacity: .55; filter: brightness(0) invert(0.55); }
+    .breadcrumb strong { color: var(--fd-color-text); font-weight: 500; }
+    .admin-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 14px; }
+    .admin-title { margin: 0; font-size: 22px; text-transform: none; }
+    .admin-subtitle { display: none; }
+    .new-cas { min-height: 38px; padding: 0 14px; color: var(--fd-color-white); border: 0; border-radius: 5px; background: #909b39; cursor: pointer; font-size: 14px; }
+    .close { width: 36px; height: 36px; color: var(--fd-color-text-secondary); border: 0; background: transparent; cursor: pointer; font-size: 25px; line-height: 1; }
+
+    .admin-content { padding: 0 20px 20px; }
+    .filters { display: grid; grid-template-columns: 1.2fr 1.35fr 1.05fr .75fr .75fr 1fr 1fr; gap: 17px 20px; padding: 21px 20px 17px; background: var(--filter-bg); }
+    .filter { min-width: 0; }
+    .filter__label { display: block; margin-bottom: 5px; color: var(--fd-color-text); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .filter__control { width: 100%; height: 38px; padding: 0 7px; border: 1px solid #8d8d8d; border-radius: 4px; color: #777; background: transparent; font-size: 12px; }
+    .filter__control:focus { outline: 3px solid rgba(144, 155, 57, .22); border-color: var(--control-active); }
+    .filter__footer { display: flex; justify-content: flex-end; gap: 9px; grid-column: 1 / -1; padding-top: 11px; border-top: 1px solid #b8b8b8; }
+    .clear { min-height: 36px; padding: 0 9px; color: #b5b5b5; border: 1px solid #b5b5b5; border-radius: 4px; background: transparent; cursor: pointer; font-size: 12px; }
+    .filter-button { min-height: 36px; padding: 0 11px; color: var(--fd-color-white); border: 0; border-radius: 4px; background: #b7b7b7; cursor: pointer; font-size: 12px; font-weight: 600; }
+
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0 9px; }
+    .results { color: var(--fd-color-text-secondary); font-size: 12px; }
+    .bulk-actions { display: flex; gap: 7px; }
+    .button { min-height: 38px; padding: 0 10px; border: 1px solid #c7c7c7; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .button:disabled { opacity: .42; cursor: not-allowed; }
+    .button--secondary { color: var(--fd-color-text-secondary); background: var(--fd-color-white); }
+    .button--primary { color: var(--fd-color-white); background: #4d5a2f; }
+    .button--danger { color: var(--fd-color-white); background: #a53f3f; }
+
+    .table-shell { overflow: hidden; border: 1px solid var(--panel-border); border-radius: 10px 10px 5px 5px; }
+    .table-scroll { overflow-x: auto; overflow-y: hidden; }
+    table { width: 100%; min-width: 2200px; border-collapse: collapse; table-layout: fixed; font-size: 17px; }
+    th { padding: 18px 10px; color: var(--fd-color-text); background: var(--table-head); font-size: 16px; font-weight: 700; text-align: left; text-transform: uppercase; white-space: nowrap; }
+    td { height: 78px; padding: 10px; border-top: 1px solid var(--panel-border); text-align: left; white-space: nowrap; }
+    th:first-child, td:first-child { width: 28px; padding: 7px 5px; }
+    tbody tr:hover { background: #fafbf6; }
+    .selector { width: 24px; height: 24px; accent-color: #909b39; cursor: pointer; }
+    .status { display: inline-flex; align-items: center; min-height: 26px; padding: 0 9px; border-radius: 4px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .status--requested { color: #ed2b91; background: #fff0f8; }
+    .status--pending { color: var(--fd-state-pending); background: var(--fd-state-pending-surface); }
+    .status--queue { color: #f5b028; background: #fff9e7; }
+    .status--issued { color: #369040; background: #eef8ef; }
+    .status--cancelled { color: #ff4d4f; background: #fff1f0; }
+    .status--bonified { color: #000000; background: #f5f5f5; }
+    .type { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+    .type::before { width: 8px; height: 8px; border-radius: 50%; content: ""; }
+    .type--credit::before { background: var(--credit); }
+    .type--debit::before { background: var(--debit); }
+    .type--credit { color: var(--credit); }
+    .type--debit { color: var(--debit); }
+    .row-actions { display: flex; align-items: center; gap: 6px; }
+    .icon-action { width: 30px; height: 30px; padding: 0; color: #4d5a2f; border: 1px solid #ccd1c9; border-radius: 4px; background: var(--fd-color-white); cursor: pointer; font-size: 14px; }
+    .icon-action:disabled { color: #bcbfbc; cursor: not-allowed; }
+    .fixed-column { position: sticky; right: 0; z-index: 1; background: var(--fd-color-white); box-shadow: inset 2px 0 #8d8d8d; }
+    th.fixed-column { z-index: 2; background: var(--table-head); }
+    .empty { display: none; padding: 52px 16px; color: var(--fd-color-text-secondary); text-align: center; }
+    .empty.is-visible { display: block; }
+    .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 18px; min-height: 92px; color: var(--fd-color-text-secondary); font-size: 17px; }
+    .pagination__button { width: 34px; height: 42px; color: #c4c7c4; border: 0; background: transparent; cursor: pointer; font-size: 28px; }
+    .pagination__current { display: grid; width: 42px; height: 50px; place-items: center; color: var(--shell-green); border: 2px solid var(--shell-green); border-radius: 8px; }
+
+    .notifications { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+    .notification { display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; color: var(--fd-color-black); border: 1px solid #9ca82f; border-radius: 5px; background: #f3fbe9; font-size: 14px; }
+    .notification__icon { display: grid; flex: 0 0 28px; width: 28px; height: 28px; place-items: center; color: var(--fd-color-white); border-radius: 50%; background: #9ca82f; font-weight: 700; }
+    .notification__message { flex: 1; font-weight: 400; }
+    .notification__close { width: 28px; height: 32px; color: #8d8d8d; border: 0; background: transparent; cursor: pointer; font-size: 28px; }
+
+    .dialog-backdrop { position: fixed; z-index: 10; inset: 0; display: none; place-items: center; padding: 24px; background: rgba(0, 0, 0, .32); }
+    .dialog-backdrop.is-visible { display: grid; }
+    .dialog { width: min(620px, 100%); overflow: hidden; border: 1px solid #d0d3d0; border-radius: 10px; background: var(--fd-color-white); box-shadow: 0 12px 32px rgba(0, 0, 0, .22); }
+    .dialog__header { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid var(--panel-border); }
+    .dialog__title { margin: 0; font-size: 18px; text-transform: uppercase; }
+    .dialog__body { padding: 20px; }
+    .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .dialog__footer { display: flex; justify-content: center; gap: 10px; padding: 16px 20px 20px; }
+    .confirm-copy { margin: 0; color: var(--fd-color-text-secondary); line-height: 1.5; }
+
+    @media (max-width: 1050px) { .filters { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 700px) { .filters { grid-template-columns: repeat(2, 1fr); } .toolbar { align-items: flex-start; flex-direction: column; } .detail-grid { grid-template-columns: 1fr; } .app-topbar { padding: 0 20px; } .brand { font-size: 36px; } .app-sidebar { width: 72px; } .app-main { margin-left: 72px; } }
+  </style>
+</head>
+<body>
+  <main class="app-shell" aria-label="Administrador de costos asociados">
+    <header class="app-topbar">
+      <div class="brand"><img class="brand__logo" src="referencias/Fedea_Logo-Bone.svg" alt="Fedea"><div class="exchange" aria-label="Tipo de cambio"><div class="exchange__rates"><span class="exchange__rate"><span class="exchange__label">Compra</span><strong class="exchange__value">1405</strong></span><span class="exchange__rate"><span class="exchange__label">Venta</span><strong class="exchange__value">1420</strong></span></div><img class="exchange__settings" src="referencias/icons/icon_settings.svg" alt="Configuración"></div></div>
+      <div class="user-context"><div><span class="user-context__name">Lara Montiel Garcia</span><span class="user-context__role">Comercial - GENERAL PICO</span><span class="user-context__points">15000 puntos</span></div><span class="user-context__bell" data-icon="BellOutlined" aria-label="Notificaciones"><img src="referencias/icons/BellOutlined.svg" alt=""><span class="user-context__badge">25</span></span><img class="user-context__avatar" src="referencias/icons/Profile.png" alt="Perfil de Lara Montiel Garcia"></div>
+    </header>
+    <aside class="app-sidebar" aria-label="Navegación principal">
+      <button class="sidebar-icon" id="sidebar-toggle" type="button"><img src="referencias/icons/icon_arrow.svg" alt="Expandir menú"><span class="sidebar-icon__label">Menú</span></button>
+      <button class="sidebar-icon sidebar-icon--hr" type="button"><img src="referencias/icons/icon_user.svg" alt=""><span class="sidebar-icon__label">Recursos Humanos</span><img class="sidebar-icon__chevron" src="referencias/icons/icon_arrow.svg" alt=""></button>
+      <button class="sidebar-icon sidebar-icon--sales" type="button"><img src="referencias/icons/icon_sells.svg" alt=""><span class="sidebar-icon__label">Ventas</span><img class="sidebar-icon__chevron" src="referencias/icons/icon_arrow.svg" alt=""></button>
+      <button class="sidebar-icon" type="button"><img src="referencias/icons/icon_pay.svg" alt=""><span class="sidebar-icon__label">Compras</span><img class="sidebar-icon__chevron" src="referencias/icons/icon_arrow.svg" alt=""></button>
+      <button class="sidebar-icon" type="button"><img src="referencias/icons/icon_settings.svg" alt=""><span class="sidebar-icon__label">Configuración</span><img class="sidebar-icon__chevron" src="referencias/icons/icon_arrow.svg" alt=""></button>
+      <button class="sidebar-icon sidebar-icon--active" type="button"><img src="referencias/icons/icon_search.svg" alt=""><span class="sidebar-icon__label">Gastos</span><img class="sidebar-icon__chevron" src="referencias/icons/icon_arrow.svg" alt=""></button>
+      <button class="sidebar-icon" type="button"><img src="referencias/icons/icon_bank.svg" alt=""><span class="sidebar-icon__label">Tesorería</span><img class="sidebar-icon__chevron" src="referencias/icons/icon_arrow.svg" alt=""></button>
+      <button class="sidebar-icon" type="button"><img src="referencias/icons/icon_billing.svg" alt=""><span class="sidebar-icon__label">Contabilidad</span><img class="sidebar-icon__chevron" src="referencias/icons/icon_arrow.svg" alt=""></button>
+      <button class="sidebar-icon" type="button"><img src="referencias/icons/icon_track.svg" alt=""><span class="sidebar-icon__label">Logística</span><img class="sidebar-icon__chevron" src="referencias/icons/icon_arrow.svg" alt=""></button>
+      <button class="sidebar-icon" type="button"><img src="referencias/icons/icon_user.svg" alt=""><span class="sidebar-icon__label">Contribuyentes</span><img class="sidebar-icon__chevron" src="referencias/icons/icon_arrow.svg" alt=""></button>
+    </aside>
+    <section class="app-main">
+      <nav class="breadcrumb" aria-label="Ruta de navegación"><img class="breadcrumb__home" src="referencias/icons/Group (1).svg" alt="Inicio"><span class="breadcrumb__separator">/</span><span class="breadcrumb__section">Gastos<img class="breadcrumb__chevron" src="referencias/icons/icon_arrow.svg" alt=""></span><span class="breadcrumb__separator">/</span><strong>Admin de CAS</strong></nav>
+      <header class="admin-header">
+        <div><h1 class="admin-title">Admin. de Costos Asociados</h1><p class="admin-subtitle">Administración de costos asociados</p></div>
+        <button class="new-cas" id="new-cas" type="button">＋ Nuevo CAS</button>
+      </header>
+
+    <section class="admin-content">
+      <form class="filters" id="filters">
+        <label class="filter"><span class="filter__label">Fecha de creación</span><input class="filter__control" type="date" value="2026-05-01"></label>
+        <label class="filter"><span class="filter__label">Contribuyente</span><input class="filter__control" type="search" placeholder="Razón Social o CUIT"></label>
+        <label class="filter"><span class="filter__label">Rol</span><select class="filter__control"><option>Todos</option><option>Proveedor</option><option>Cliente</option></select></label>
+        <label class="filter"><span class="filter__label">Grano</span><select class="filter__control"><option>Todos</option><option>Girasol</option></select></label>
+        <label class="filter"><span class="filter__label">Cosecha</span><select class="filter__control"><option>25/26</option><option>24/25</option></select></label>
+        <label class="filter"><span class="filter__label">CAS</span><input class="filter__control" type="search" value="Bonificación por seco"></label>
+        <label class="filter"><span class="filter__label">Estado</span><select class="filter__control"><option>Todos</option><option>Pendiente</option><option>Solicitado</option><option>En cola de facturación</option><option>Emitido</option><option>Anulado</option><option>Bonificado</option></select></label>
+        <label class="filter"><span class="filter__label">Sucursal</span><select class="filter__control"><option>Sucursal Rosario</option><option>Sede central</option></select></label>
+        <div class="filter__footer"><button class="clear" type="reset">Borrar filtros</button><button class="filter-button" type="submit">Aplicar filtros</button></div>
+      </form>
+
+      <div class="toolbar"><div class="bulk-actions"><button class="button button--secondary" type="button">▣ &nbsp; Imprimir reporte</button><button class="button button--secondary" type="button">▧ &nbsp; Descargar excel</button><button class="button button--secondary" id="bulk-authorize" type="button" disabled>◉ &nbsp; Autorizar</button><button class="button button--secondary" type="button">$ &nbsp; Emitir</button><button class="button button--secondary" id="bulk-reject" type="button" disabled>ⓧ &nbsp; Rechazar</button></div><label class="results">Ordenar por <select class="filter__control" style="width: 180px; height: 48px; margin-left: 10px"><option>Fecha ↓</option><option>Estado</option></select></label></div>
+
+      <section class="table-shell" aria-label="Listado de costos asociados">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th></th><th>Est.</th><th>Tipo</th><th>Creación</th><th>Emisión</th><th>Vto.</th><th>CAS</th><th>Tarifa x tn</th><th>Importe</th><th>Moneda</th><th>Comprobante</th><th>Contribuyente</th><th>Rol</th><th class="fixed-column">Acción</th></tr></thead>
+            <tbody id="cas-rows">
+              <tr data-status="SOLICITADO" data-cas="Bonificación por seco"><td><input class="selector row-selector" type="checkbox" aria-label="Seleccionar CAS 1"></td><td><span class="status status--requested">SOLICITADO</span></td><td><span class="type type--credit">Crédito</span></td><td>21/08/2026</td><td>-</td><td>-</td><td>Bonificación por seco</td><td>$ 285.000 / Tn</td><td>$ 1.068.750,00</td><td>ARS</td><td>-</td><td>Estancia La Esperanza S.A.<br><small>CUIT 30-71234567-8</small></td><td>Proveedor</td><td class="fixed-column"><div class="row-actions"><button class="icon-action" data-action="review" title="Revisar">◉</button><button class="icon-action" data-action="authorize" title="Autorizar">✓</button><button class="icon-action" data-action="reject" title="Rechazar">×</button></div></td></tr>
+              <tr data-status="PENDIENTE" data-cas="Bonificación por seco"><td><input class="selector row-selector" type="checkbox" aria-label="Seleccionar CAS 2"></td><td><span class="status status--pending">PENDIENTE</span></td><td><span class="type type--credit">Crédito</span></td><td>20/08/2026</td><td>-</td><td>-</td><td>Bonificación por seco</td><td>$ 285.000 / Tn</td><td>$ 855.000,00</td><td>ARS</td><td>-</td><td>Cooperativa del Sur<br><small>CUIT 30-70987654-1</small></td><td>Proveedor</td><td class="fixed-column"><div class="row-actions"><button class="icon-action" data-action="review" title="Revisar">◉</button><button class="icon-action" data-action="authorize" title="Autorizar">✓</button><button class="icon-action" data-action="reject" title="Rechazar">×</button></div></td></tr>
+              <tr data-status="EN COLA DE FACTURACIÓN" data-cas="Bonificación por seco"><td><input class="selector row-selector" type="checkbox" aria-label="Seleccionar CAS 3"></td><td><span class="status status--queue">EN COLA DE FACTURACIÓN</span></td><td><span class="type type--credit">Crédito</span></td><td>15/08/2026</td><td>-</td><td>-</td><td>Bonificación por seco</td><td>$ 285.000 / Tn</td><td>$ 570.000,00</td><td>ARS</td><td>-</td><td>Los Álamos S.A.<br><small>CUIT 30-70111222-3</small></td><td>Proveedor</td><td class="fixed-column"><div class="row-actions"><button class="icon-action" data-action="emit" title="Emitir">$</button></div></td></tr>
+              <tr data-status="EMITIDO" data-cas="Bonificación por seco"><td><input class="selector row-selector" type="checkbox" aria-label="Seleccionar CAS 4"></td><td><span class="status status--issued">EMITIDO</span></td><td><span class="type type--credit">Crédito</span></td><td>01/08/2026</td><td>05/08/2026</td><td>04/09/2026</td><td>Bonificación por seco</td><td>$ 285.000 / Tn</td><td>$ 1.425.000,00</td><td>ARS</td><td>NC B 0004-00012876</td><td>Campo Verde S.A.<br><small>CUIT 30-70444555-6</small></td><td>Proveedor</td><td class="fixed-column"><div class="row-actions"><button class="icon-action" data-action="cancel" title="Anular">↶</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="empty" id="empty">No hay costos asociados para los filtros seleccionados.</div>
+      </section>
+      <div class="notifications" id="notifications" aria-live="polite"></div>
+      <nav class="pagination" aria-label="Paginación"><span>Total: 4</span><button class="pagination__button" type="button" aria-label="Página anterior">‹</button><span class="pagination__current">1</span><button class="pagination__button" type="button" aria-label="Página siguiente">›</button></nav>
+    </section>
+    </section>
+  </main>
+
+  <div class="dialog-backdrop" id="dialog-backdrop" role="presentation">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+      <header class="dialog__header"><h2 class="dialog__title" id="dialog-title">Revisar costo asociado</h2><button class="close" id="dialog-close" type="button" aria-label="Cerrar">×</button></header>
+      <div class="dialog__body"><div class="detail-grid"><div class="field"><span class="filter__label">CAS</span><strong id="detail-cas">Bonificación por seco</strong></div><div class="field"><span class="filter__label">Estado</span><strong id="detail-status">SOLICITADO</strong></div><div class="field"><span class="filter__label">Contribuyente</span><strong>Estancia La Esperanza S.A.</strong></div><div class="field"><span class="filter__label">Importe</span><strong>$ 1.068.750,00 ARS</strong></div></div><p class="confirm-copy" style="margin-top: 20px">Al autorizar, el CAS pasará a <strong>EN COLA DE FACTURACIÓN</strong>. Al rechazarlo, dejará de estar disponible para emisión.</p></div>
+      <footer class="dialog__footer"><button class="button button--secondary" id="dialog-cancel" type="button">Cancelar</button><button class="button button--danger" id="dialog-reject" type="button">Rechazar</button><button class="button button--primary" id="dialog-authorize" type="button">Autorizar</button></footer>
+    </section>
+  </div>
+
+  <script>
+    const rows = [...document.querySelectorAll('#cas-rows tr')];
+    const backdrop = document.querySelector('#dialog-backdrop');
+    const notifications = document.querySelector('#notifications');
+    const formatCount = () => `${document.querySelectorAll('#cas-rows tr').length} costos asociados encontrados`;
+
+    function notify(message, error = false) {
+      const item = document.createElement('div');
+      item.className = `notification${error ? ' notification--error' : ''}`;
+      item.innerHTML = `<span class="notification__icon">${error ? '×' : '✓'}</span><span class="notification__message">${message}</span><button class="notification__close" type="button" aria-label="Cerrar notificación">×</button>`;
+      item.querySelector('.notification__close').addEventListener('click', () => item.remove());
+      notifications.append(item);
+    }
+
+    function selectedRows() { return rows.filter((row) => row.querySelector('.row-selector').checked); }
+    function updateBulkActions() { const enabled = selectedRows().some((row) => ['PENDIENTE', 'SOLICITADO'].includes(row.dataset.status)); document.querySelector('#bulk-authorize').disabled = !enabled; document.querySelector('#bulk-reject').disabled = !enabled; }
+    function setStatus(row, status) { row.dataset.status = status; const statusElement = row.querySelector('.status'); statusElement.textContent = status; statusElement.className = `status ${status === 'PENDIENTE' ? 'status--pending' : status === 'ANULADO' ? 'status--cancelled' : status === 'EN COLA DE FACTURACIÓN' ? 'status--queue' : status === 'EMITIDO' ? 'status--issued' : 'status--requested'}`; row.querySelector('.row-selector').checked = false; }
+    function closeDialog() { backdrop.classList.remove('is-visible'); }
+    function getActionRow(button) { return button.closest('tr'); }
+    function openReview(row) { document.querySelector('#detail-status').textContent = row.dataset.status; document.querySelector('#detail-cas').textContent = row.dataset.cas; backdrop.classList.add('is-visible'); backdrop.dataset.rowIndex = rows.indexOf(row); }
+
+    function handleDecision(status, row) { setStatus(row, status); closeDialog(); notify(status === 'EN COLA DE FACTURACIÓN' ? `CAS ${row.dataset.cas} autorizado correctamente.` : `CAS ${row.dataset.cas} rechazado.`, status !== 'EN COLA DE FACTURACIÓN'); updateBulkActions(); }
+    document.querySelectorAll('[data-action]').forEach((button) => button.addEventListener('click', () => { const row = getActionRow(button); const action = button.dataset.action; if (action === 'review') openReview(row); if (action === 'authorize') handleDecision('EN COLA DE FACTURACIÓN', row); if (action === 'reject') handleDecision('ANULADO', row); if (action === 'emit') notify('El CAS fue enviado al motor de facturación.'); if (action === 'cancel') notify('El CAS no puede anularse porque todavía no se configuraron sus validaciones.', true); }));
+    document.querySelector('#dialog-authorize').addEventListener('click', () => handleDecision('EN COLA DE FACTURACIÓN', rows[Number(backdrop.dataset.rowIndex)]));
+    document.querySelector('#dialog-reject').addEventListener('click', () => handleDecision('ANULADO', rows[Number(backdrop.dataset.rowIndex)]));
+    document.querySelector('#dialog-close').addEventListener('click', closeDialog); document.querySelector('#dialog-cancel').addEventListener('click', closeDialog); backdrop.addEventListener('click', (event) => { if (event.target === backdrop) closeDialog(); });
+    document.querySelectorAll('.row-selector').forEach((selector) => selector.addEventListener('change', updateBulkActions));
+    document.querySelector('#bulk-authorize').addEventListener('click', () => { selectedRows().filter((row) => ['PENDIENTE', 'SOLICITADO'].includes(row.dataset.status)).forEach((row) => setStatus(row, 'EN COLA DE FACTURACIÓN')); notify('CAS seleccionados autorizados correctamente.'); updateBulkActions(); });
+    document.querySelector('#bulk-reject').addEventListener('click', () => { selectedRows().filter((row) => ['PENDIENTE', 'SOLICITADO'].includes(row.dataset.status)).forEach((row) => setStatus(row, 'ANULADO')); notify('CAS seleccionados rechazados.', true); updateBulkActions(); });
+    document.querySelector('#filters').addEventListener('submit', (event) => { event.preventDefault(); notify('Filtros aplicados correctamente.'); });
+    document.querySelector('#new-cas').addEventListener('click', () => notify('La creación de CAS se habilitará en el próximo flujo.'));
+    document.querySelector('#sidebar-toggle').addEventListener('click', () => {
+      const sidebar = document.querySelector('.app-sidebar');
+      const main = document.querySelector('.app-main');
+      sidebar.classList.toggle('is-open');
+      main.classList.toggle('menu-open');
+    });
+  </script>
+</body>
+</html>

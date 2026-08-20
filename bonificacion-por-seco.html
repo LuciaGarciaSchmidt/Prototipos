@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bonificación por seco | Fedea</title>
+  <link rel="stylesheet" href="design-system.css">
+  <style>
+    :root {
+      --surface-muted: #f3f3f3;
+      --table-head: #ececea;
+      --table-selected: #f4f5eb;
+      --panel-border: #d9ddda;
+      --control-active: #909b39;
+      --warning-surface: #fff9e7;
+      --warning-border: #f2a900;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f5f6f4; color: var(--fd-color-text); font-family: var(--fd-font-family); }
+    button, input { font: inherit; }
+
+    .popup {
+      width: min(calc(100% - 32px), var(--fd-app-width));
+      min-height: 0;
+      margin: 16px auto;
+      border: 1px solid #d0d3d0;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      overflow: hidden;
+      background: var(--fd-color-white);
+    }
+
+    .popup__header {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 34px 48px 20px;
+    }
+
+    .popup__title { margin: 0; font-size: 22px; font-weight: 700; text-align: center; text-transform: uppercase; }
+    .popup__subtitle { margin: 0; color: var(--fd-color-text-secondary); font-size: 20px; font-weight: 400; text-align: center; }
+    .close { position: absolute; top: 12px; right: 16px; width: 36px; height: 36px; color: var(--fd-color-text-secondary); border: 0; background: transparent; cursor: pointer; font-size: 25px; line-height: 1; }
+
+    .contract {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      margin: 20px 24px 0;
+      padding: 16px;
+      background: var(--fd-color-white);
+    }
+
+    .field { min-width: max-content; }
+    .field__label { display: block; margin-bottom: 6px; color: var(--fd-color-text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .field__value { display: block; font-size: 14px; font-weight: 600; }
+
+    .content { padding: 20px 24px 24px; }
+    .table-panel { overflow: hidden; border: 1px solid var(--panel-border); border-radius: 10px 10px 5px 5px; }
+    .table-scroll { overflow-x: auto; overflow-y: hidden; }
+    .empty-state { display: none; padding: 44px 16px; color: var(--fd-color-text-secondary); text-align: center; }
+    .empty-state.is-visible { display: block; }
+    table { width: 100%; min-width: 1180px; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
+    th { padding: 11px 5px; overflow: hidden; color: var(--fd-color-text-secondary); background: var(--table-head); font-size: 10px; font-weight: 700; text-align: left; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+    td { height: 52px; padding: 7px 5px; overflow: hidden; border-top: 1px solid var(--panel-border); text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+    th:first-child, td:first-child { width: 28px; padding-right: 5px; padding-left: 5px; }
+    tbody tr { transition: background 120ms ease; }
+    tbody tr:hover { background: #fafbf6; }
+    tbody tr.is-selected { background: var(--table-selected); }
+    tbody tr.is-locked { color: #a7a7a7; background: #fafafa; }
+    .selector { width: 18px; height: 18px; accent-color: var(--control-active); cursor: pointer; }
+    .selector:disabled { cursor: not-allowed; }
+
+    .fixed-column { position: sticky; right: 0; z-index: 1; min-width: 108px; border-left: 0; box-shadow: inset 1.5px 0 #8d8d8d; background: var(--fd-color-white); }
+    th.fixed-column { z-index: 2; background: var(--table-head); }
+    tbody tr.is-selected .fixed-column { background: var(--table-selected); }
+    tbody tr.is-locked .fixed-column { background: #fafafa; }
+    .kg-input { display: none; width: 86px; padding: 7px 8px; border: 1px solid var(--fd-color-border); border-radius: 5px; text-align: left; }
+    .kg-input:not(:disabled) { display: inline-block; }
+    .kg-input:focus { outline: 3px solid rgba(128, 188, 0, 0.24); border-color: var(--control-active); }
+
+    .totals-row { display: flex; align-items: flex-end; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+    .total { min-width: 148px; min-height: 70px; padding: 10px 12px; border-radius: 4px; background: var(--surface-muted); }
+    .total__label { display: block; min-height: 25px; color: var(--fd-color-text-secondary); font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .total__value { display: block; margin-top: 6px; font-size: 15px; font-weight: 700; }
+    .total--amount { color: var(--fd-color-white); background: #4d5a2f; }
+    .total--amount .total__label { color: var(--fd-color-white); }
+
+    .notifications { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+    .notification { display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; color: var(--fd-color-black); border: 1px solid #9ca82f; border-radius: 5px; background: #f3fbe9; font-size: 14px; }
+    .notification__icon { display: grid; flex: 0 0 28px; width: 28px; height: 28px; place-items: center; color: var(--fd-color-white); border-radius: 50%; background: #9ca82f; font-size: 17px; font-weight: 700; }
+    .notification--error { border-color: var(--fd-color-error); background: var(--fd-color-error-surface); }
+    .notification--error .notification__icon { background: var(--fd-color-error); }
+    .notification__label { font-weight: 700; }
+    .notification__message { flex: 1; font-weight: 400; }
+    .notification__close { flex: 0 0 28px; width: 28px; height: 32px; color: #8d8d8d; border: 0; background: transparent; cursor: pointer; font-size: 32px; line-height: 1; }
+    .popup__footer { display: flex; justify-content: center; gap: 12px; padding: 18px 24px 22px; }
+    .button { min-width: 142px; min-height: 42px; padding: 0 18px; border: 1px solid transparent; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    .button--secondary { color: var(--fd-color-text-secondary); background: var(--fd-color-white); }
+    .button--primary { color: var(--fd-color-white); background: var(--fd-color-brand-dark); }
+    .button--primary:not(:disabled):hover { background: var(--fd-color-brand-light); }
+    .button:disabled { opacity: .45; cursor: not-allowed; }
+
+    @media (max-width: 900px) {
+      .contract { flex-wrap: wrap; }
+      .totals-row { justify-content: flex-start; flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <main class="popup" aria-label="Solicitud de bonificación por seco">
+    <header class="popup__header">
+      <h1 class="popup__title">Bonificación por seco</h1>
+      <p class="popup__subtitle">Seleccioná las Cartas de Porte a bonificar</p>
+      <button class="close" type="button" aria-label="Cerrar">×</button>
+    </header>
+
+    <section class="contract" aria-label="Datos del contrato">
+      <div class="field"><span class="field__label">Nro. contrato</span><span class="field__value">CP-2026-00481</span></div>
+      <div class="field"><span class="field__label">Razón social</span><span class="field__value">Estancia La Esperanza S.A.</span></div>
+      <div class="field"><span class="field__label">Rol</span><span class="field__value">Proveedor</span></div>
+      <div class="field"><span class="field__label">Grano</span><span class="field__value">Girasol</span></div>
+      <div class="field"><span class="field__label">Calidad</span><span class="field__value">Estándar</span></div>
+      <div class="field"><span class="field__label">Cosecha</span><span class="field__value">25/26</span></div>
+      <div class="field"><span class="field__label">Precio contrato</span><span class="field__value">$ 285.000 / Tn</span></div>
+    </section>
+
+    <section class="content">
+      <section class="table-panel" aria-label="Cartas de Porte a bonificar">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th></th><th>Fecha aplicación</th><th>Fecha tipo cambio</th><th>Nro. carta de porte</th><th>Kg aplicados</th><th>Kg liquidados</th><th>% humedad</th><th>% bonificación</th><th>Precio</th><th>Kg bonificados</th><th>Kg pendientes</th><th class="fixed-column">Kg a bonificar</th><th>Importe bonificación</th></tr></thead>
+            <tbody id="cp-rows">
+              <tr data-cp="CP-8801" data-date="2026-05-02" data-pending="7000" data-rate="0.05"><td><input class="selector" type="checkbox" aria-label="Seleccionar CP-8801"></td><td>02/05/2026</td><td>02/05/2026</td><td>CP-8801</td><td>7.000</td><td>0</td><td>5%</td><td>5%</td><td>$ 285.000</td><td>0</td><td class="pending-cell">7.000</td><td class="fixed-column"><input class="kg-input kg-to-bonus" type="number" min="0" value="7000" disabled aria-label="Kg a bonificar CP-8801"></td><td class="amount-cell">$ 0</td></tr>
+              <tr data-cp="CP-8808" data-date="2026-05-06" data-pending="11000" data-rate="0.05"><td><input class="selector" type="checkbox" aria-label="Seleccionar CP-8808"></td><td>06/05/2026</td><td>06/05/2026</td><td>CP-8808</td><td>11.000</td><td>0</td><td>5%</td><td>5%</td><td>$ 285.000</td><td>0</td><td class="pending-cell">11.000</td><td class="fixed-column"><input class="kg-input kg-to-bonus" type="number" min="0" value="11000" disabled aria-label="Kg a bonificar CP-8808"></td><td class="amount-cell">$ 0</td></tr>
+              <tr data-cp="CP-8817" data-date="2026-05-11" data-pending="9500" data-rate="0.05"><td><input class="selector" type="checkbox" aria-label="Seleccionar CP-8817"></td><td>11/05/2026</td><td>11/05/2026</td><td>CP-8817</td><td>9.500</td><td>0</td><td>5%</td><td>5%</td><td>$ 285.000</td><td>0</td><td class="pending-cell">9.500</td><td class="fixed-column"><input class="kg-input kg-to-bonus" type="number" min="0" value="9500" disabled aria-label="Kg a bonificar CP-8817"></td><td class="amount-cell">$ 0</td></tr>
+              <tr data-cp="CP-8830" data-date="2026-05-20" data-pending="6000" data-rate="0.05"><td><input class="selector" type="checkbox" aria-label="Seleccionar CP-8830"></td><td>20/05/2026</td><td>20/05/2026</td><td>CP-8830</td><td>6.000</td><td>0</td><td>5%</td><td>5%</td><td>$ 285.000</td><td>0</td><td class="pending-cell">6.000</td><td class="fixed-column"><input class="kg-input kg-to-bonus" type="number" min="0" value="6000" disabled aria-label="Kg a bonificar CP-8830"></td><td class="amount-cell">$ 0</td></tr>
+            </tbody>
+          </table>
+          <div class="empty-state" id="cp-empty">No hay Cartas de Porte pendientes de bonificar.</div>
+        </div>
+      </section>
+
+      <div class="totals-row" aria-live="polite">
+        <div class="total"><span class="total__label">Kg totales a bonificar</span><strong class="total__value" id="kg-total">0 kg</strong></div>
+        <div class="total total--amount"><span class="total__label">Total a bonificar</span><strong class="total__value" id="amount-total">$ 0</strong></div>
+      </div>
+      <div class="notifications" id="notifications" aria-live="polite"></div>
+    </section>
+
+    <footer class="popup__footer">
+      <button class="button button--secondary" type="button">Cancelar y volver</button>
+      <button class="button button--primary" id="bonus-button" type="button" disabled>Bonificar</button>
+    </footer>
+  </main>
+
+  <script>
+    const rows = [...document.querySelectorAll('#cp-rows tr')];
+    const formatKg = (value) => `${Number(value).toLocaleString('es-AR')} kg`;
+    const formatMoney = (value) => `$ ${Number(value).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const bonusButton = document.querySelector('#bonus-button');
+
+    function selectedRows() { return rows.filter((row) => row.isConnected && row.querySelector('.selector').checked); }
+
+    function dateDistance(first, second) {
+      return Math.abs((new Date(first) - new Date(second)) / 86400000);
+    }
+
+    function refresh() {
+      const selected = selectedRows();
+      const kgTotal = selected.reduce((total, row) => total + Number(row.querySelector('.kg-to-bonus').value || 0), 0);
+      const amountTotal = selected.reduce((total, row) => total + Number(row.querySelector('.amount-cell').dataset.amount || 0), 0);
+      document.querySelector('#kg-total').textContent = formatKg(kgTotal);
+      document.querySelector('#amount-total').textContent = formatMoney(amountTotal);
+      bonusButton.disabled = selected.length === 0 || kgTotal === 0 || selected.some((row) => Number(row.querySelector('.amount-cell').dataset.amount || 0) <= 0);
+    }
+
+    function updateAvailability() {
+      const selected = selectedRows();
+      rows.forEach((row) => {
+        if (!row.isConnected) return;
+        const selector = row.querySelector('.selector');
+        const input = row.querySelector('.kg-to-bonus');
+        const inWindow = selected.length === 0 || selected.every((selectedRow) => dateDistance(selectedRow.dataset.date, row.dataset.date) <= 7);
+        selector.disabled = !inWindow && !selector.checked;
+        row.classList.toggle('is-locked', selector.disabled);
+        row.classList.toggle('is-selected', selector.checked);
+        input.disabled = !selector.checked;
+        if (selector.checked) {
+          const kg = Number(input.value || 0);
+          const price = 285000;
+          const amount = kg * 0.05 * price / 1000;
+          row.querySelector('.amount-cell').dataset.amount = amount;
+          row.querySelector('.amount-cell').textContent = formatMoney(amount);
+        } else {
+          row.querySelector('.amount-cell').dataset.amount = 0;
+          row.querySelector('.amount-cell').textContent = '$ 0';
+        }
+      });
+      refresh();
+    }
+
+    rows.forEach((row) => row.querySelector('.selector').addEventListener('change', updateAvailability));
+    rows.forEach((row) => row.querySelector('.kg-to-bonus').addEventListener('input', updateAvailability));
+
+    bonusButton.addEventListener('click', () => {
+      const selected = selectedRows();
+      const amount = selected.reduce((total, row) => total + Number(row.querySelector('.amount-cell').dataset.amount || 0), 0);
+      const notification = document.createElement('div');
+      notification.className = 'notification notification--success';
+      notification.setAttribute('role', 'status');
+      notification.innerHTML = `<span class="notification__icon" aria-hidden="true">✓</span><strong class="notification__label">SOLICITUD CREADA</strong><span class="notification__message">Se generó un CAS de crédito por ${formatMoney(amount)} (importe negativo), en estado SOLICITADO.</span><button class="notification__close" type="button" aria-label="Cerrar notificación">×</button>`;
+      notification.querySelector('.notification__close').addEventListener('click', () => notification.remove());
+      document.querySelector('#notifications').append(notification);
+      selected.forEach((row) => row.remove());
+      document.querySelector('#cp-empty').classList.toggle('is-visible', document.querySelectorAll('#cp-rows tr').length === 0);
+      bonusButton.disabled = true;
+    });
+
+  </script>
+</body>
+</html>

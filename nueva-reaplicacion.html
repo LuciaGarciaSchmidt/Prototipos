@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nueva reaplicación | Fedea</title>
+  <link rel="stylesheet" href="design-system.css">
+  <style>
+    :root {
+      --page-bg: #f5f6f4;
+      --panel-bg: #ffffff;
+      --panel-border: #d9ddda;
+      --table-head: #f1f3f1;
+      --table-hover: #f7faef;
+      --table-selected: #f4f5eb;
+      --focus-ring: rgba(128, 188, 0, 0.24);
+      --control-active: #909b39;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--fd-color-text);
+      font-family: var(--fd-font-family);
+    }
+
+    button, input { font: inherit; }
+
+    .prototype-shell {
+      width: min(100%, var(--fd-app-width));
+      min-height: var(--fd-app-height);
+      margin: 0 auto;
+      background: var(--panel-bg);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 76px;
+      padding: 0 40px;
+      color: var(--fd-color-white);
+      background: var(--fd-color-brand-dark);
+    }
+
+    .topbar__brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .topbar__mark {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      color: var(--fd-color-brand-dark);
+      border-radius: 50%;
+      background: var(--fd-color-brand-lime);
+      font-weight: 700;
+    }
+
+    .topbar__context {
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 14px;
+    }
+
+    .page {
+      padding: 24px 32px 32px;
+    }
+
+    .page__heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--fd-color-brand-light);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .action-trigger {
+      padding: 10px 16px;
+      color: var(--fd-color-brand-dark);
+      border: 1px solid var(--fd-color-brand-dark);
+      border-radius: var(--fd-radius-sm);
+      background: var(--fd-color-white);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .modal {
+      overflow: hidden;
+      border: 1px solid var(--panel-border);
+      border-radius: var(--fd-radius-md);
+      background: var(--panel-bg);
+      box-shadow: var(--fd-shadow-md);
+    }
+
+    .modal__header {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 32px 48px 18px;
+    }
+
+    .modal__title {
+      margin: 0;
+      font-size: 21px;
+      text-transform: uppercase;
+    }
+
+    .modal__subtitle {
+      margin: 0;
+      color: var(--fd-color-text-secondary);
+      font-size: 20px;
+      font-weight: var(--fd-font-weight-regular);
+      line-height: var(--fd-line-height-normal);
+      text-align: center;
+    }
+
+    .close-button {
+      position: absolute;
+      right: 16px;
+      top: 12px;
+      width: 36px;
+      height: 36px;
+      color: var(--fd-color-text-secondary);
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font-size: 25px;
+      line-height: 1;
+    }
+
+    .contract-summary {
+      display: grid;
+      grid-template-columns: repeat(6, max-content);
+      justify-content: start;
+      gap: 20px;
+      margin: 20px 24px 0;
+      padding: 16px;
+      border-radius: var(--fd-radius-sm);
+      background: var(--fd-color-white);
+    }
+
+    .field__label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--fd-color-text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .field__value {
+      min-height: 22px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .modal__body { padding: 20px 24px 24px; }
+
+    .check-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--fd-color-black);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .check-control input,
+    .row-selector {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--control-active);
+      cursor: pointer;
+    }
+
+    .tables {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+      gap: 20px;
+    }
+
+    .table-panel {
+      min-width: 0;
+      border: 1px solid var(--panel-border);
+      border-radius: 10px 10px 5px 5px;
+      overflow: hidden;
+    }
+
+    .table-panel__heading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 54px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .tables .table-panel:first-child .table-panel__heading {
+      color: var(--fd-color-white);
+      background: #909b39;
+    }
+
+    .tables .table-panel:last-child .table-panel__heading {
+      color: var(--fd-color-white);
+      background: #4d5a2f;
+    }
+
+    .table-panel__title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .table-scroll { overflow-x: auto; }
+
+    .table-scroll--no-horizontal { overflow-x: hidden; }
+
+    .table-scroll--horizontal {
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    .table-scroll--horizontal table { min-width: 900px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      table-layout: fixed;
+    }
+
+    th {
+      padding: 11px 5px;
+      color: var(--fd-color-text-secondary);
+      background: var(--table-head);
+      font-size: 11px;
+      font-weight: 700;
+      text-align: left;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    th,
+    td {
+      text-align: left;
+    }
+
+    th:first-child,
+    td:first-child {
+      width: 28px;
+      padding-right: 5px;
+      padding-left: 5px;
+    }
+
+    td {
+      height: 52px;
+      padding: 7px 5px;
+      border-top: 1px solid var(--panel-border);
+      white-space: nowrap;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fixed-column {
+      position: sticky;
+      right: 0;
+      z-index: 1;
+      min-width: 112px;
+      border-left: 0;
+      box-shadow: inset 1.5px 0 #8d8d8d;
+      background: var(--fd-color-white);
+    }
+
+    th.fixed-column {
+      z-index: 2;
+      background: var(--table-head);
+    }
+
+    tbody tr.is-selected .fixed-column {
+      background: var(--table-selected);
+    }
+
+    tbody tr { transition: background var(--fd-motion-duration-fast) var(--fd-motion-ease); }
+    tbody tr:hover { background: var(--table-hover); }
+    tbody tr.is-selected { background: var(--table-selected); }
+
+    .number { text-align: left; }
+
+    .kg-input {
+      display: none;
+      width: 86px;
+      padding: 8px 9px;
+      border: 1px solid var(--fd-color-border);
+      border-radius: 5px;
+      text-align: left;
+    }
+
+    .kg-input:not(:disabled) { display: inline-block; }
+
+    .kg-input:disabled {
+      color: var(--fd-color-text-disabled);
+      background: var(--fd-color-surface-muted);
+      cursor: not-allowed;
+    }
+
+    .kg-input:focus {
+      outline: 3px solid var(--focus-ring);
+      border-color: var(--fd-color-brand-grass);
+    }
+
+    .empty-state {
+      display: none;
+      padding: 48px 16px;
+      color: var(--fd-color-text-secondary);
+      text-align: center;
+    }
+
+    .empty-state.is-visible { display: block; }
+
+    .totals {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 168px));
+      justify-content: end;
+      gap: 10px;
+      margin: 0;
+    }
+
+    .totals-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-top: 16px;
+    }
+
+    .totals-row .check-control {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .total {
+      min-height: 70px;
+      padding: 10px 12px;
+      border: 1px solid var(--panel-border);
+      border-radius: var(--fd-radius-sm);
+      background: var(--fd-color-surface-subtle);
+    }
+
+    .total__label {
+      display: block;
+      min-height: 25px;
+      color: var(--fd-color-text-secondary);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .total__value {
+      display: block;
+      margin-top: 6px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .total--danger {
+      color: var(--fd-color-error);
+      border-color: var(--fd-color-error);
+      background: var(--fd-color-error-surface);
+    }
+
+    .notification {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+      padding: 10px 12px 10px 16px;
+      color: var(--fd-color-black);
+      border: 1px solid #9ca82f;
+      border-radius: var(--fd-radius-sm);
+      background: #f3fbe9;
+      font-size: 14px;
+    }
+
+    .notification.is-visible { display: flex; }
+    .notification__icon { display: grid; flex: 0 0 28px; width: 28px; height: 28px; place-items: center; color: var(--fd-color-white); border-radius: 50%; background: #9ca82f; font-size: 17px; font-weight: 700; }
+    .notification--error { border-color: var(--fd-color-error); background: var(--fd-color-error-surface); }
+    .notification--error .notification__icon { background: var(--fd-color-error); }
+    .notification__label { font-weight: 700; }
+    .notification__message { flex: 1; font-weight: 400; }
+    .notification__close { flex: 0 0 28px; width: 28px; height: 32px; color: #8d8d8d; border: 0; background: transparent; cursor: pointer; font-size: 32px; line-height: 1; }
+
+    .modal__footer {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      padding: 18px 24px 22px;
+    }
+
+    .button {
+      min-width: 122px;
+      min-height: 42px;
+      padding: 0 18px;
+      border: 1px solid transparent;
+      border-radius: var(--fd-radius-sm);
+      cursor: pointer;
+      font-weight: 600;
+      transition: background var(--fd-motion-duration-base) var(--fd-motion-ease), opacity var(--fd-motion-duration-base) var(--fd-motion-ease);
+    }
+
+    .button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .button--secondary { color: var(--fd-color-text-secondary); border-color: transparent; background: var(--fd-color-white); }
+    .button--primary { color: var(--fd-color-white); background: var(--fd-color-brand-dark); }
+    .button--primary:not(:disabled):hover { background: var(--fd-color-brand-light); }
+
+    @media (max-width: 1100px) {
+      .contract-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .tables { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="prototype-shell" aria-label="Prototipo de nueva reaplicación">
+    <section class="page">
+      <section class="modal" aria-labelledby="modal-title">
+        <div class="modal__header">
+          <h2 class="modal__title" id="modal-title">Nueva reaplicación</h2>
+          <p class="modal__subtitle">Seleccioná un subcontrato y las Cartas de Porte a reaplicar.</p>
+          <button class="close-button" type="button" aria-label="Cerrar">×</button>
+        </div>
+
+        <div class="contract-summary">
+          <div><span class="field__label">Nro. contrato principal</span><span class="field__value">CP-2026-00481</span></div>
+          <div><span class="field__label">Contribuyente</span><span class="field__value">Estancia La Esperanza S.A.</span></div>
+          <div><span class="field__label">Rol</span><span class="field__value">Vendedor</span></div>
+          <div><span class="field__label">Grano</span><span class="field__value">Maní</span></div>
+          <div><span class="field__label">Calidad</span><span class="field__value">Confitería</span></div>
+          <div><span class="field__label">Cosecha / operación</span><span class="field__value">25/26 · Compra</span></div>
+        </div>
+
+        <div class="modal__body">
+          <div class="tables">
+            <section class="table-panel" aria-labelledby="subcontracts-title">
+              <div class="table-panel__heading">
+                <h3 class="table-panel__title" id="subcontracts-title">Subcontratos a reaplicar</h3>
+              </div>
+              <div class="table-scroll table-scroll--no-horizontal">
+                <table>
+                  <thead><tr><th></th><th>Nro. contrato</th><th>Tipo</th><th>Fecha</th><th>Kg pendientes</th><th class="fixed-column">Kg a reaplicar</th></tr></thead>
+                  <tbody id="subcontract-rows">
+                    <tr data-subcontract="SC-00481-01" data-pending="12500"><td><input class="row-selector subcontract-selector" name="subcontract" type="radio" aria-label="Seleccionar SC-00481-01"></td><td>SC-00481-01</td><td>Fijación</td><td>12/05/26</td><td class="number pending-cell">12.500</td><td class="fixed-column"><input class="kg-input subcontract-input" type="number" min="0" value="12500" disabled aria-label="Kg a reaplicar SC-00481-01"></td></tr>
+                    <tr data-subcontract="SC-00481-02" data-pending="8750"><td><input class="row-selector subcontract-selector" name="subcontract" type="radio" aria-label="Seleccionar SC-00481-02"></td><td>SC-00481-02</td><td>Pesificación</td><td>18/05/26</td><td class="number pending-cell">8.750</td><td class="fixed-column"><input class="kg-input subcontract-input" type="number" min="0" value="8750" disabled aria-label="Kg a reaplicar SC-00481-02"></td></tr>
+                    <tr data-subcontract="SC-00481-03" data-pending="5000"><td><input class="row-selector subcontract-selector" name="subcontract" type="radio" aria-label="Seleccionar SC-00481-03"></td><td>SC-00481-03</td><td>Fijación</td><td>26/05/26</td><td class="number pending-cell">5.000</td><td class="fixed-column"><input class="kg-input subcontract-input" type="number" min="0" value="5000" disabled aria-label="Kg a reaplicar SC-00481-03"></td></tr>
+                  </tbody>
+                </table>
+                <div class="empty-state" id="subcontract-empty">No hay subcontratos con kg pendientes de reaplicar.</div>
+              </div>
+            </section>
+
+            <section class="table-panel" aria-labelledby="transport-title">
+              <div class="table-panel__heading">
+                <h3 class="table-panel__title" id="transport-title">Cartas de porte</h3>
+              </div>
+              <div class="table-scroll table-scroll--horizontal">
+                <table>
+                  <thead><tr><th></th><th>Nro. de CP</th><th>Fecha CP</th><th>Descarga</th><th>Calidad</th><th>Kg disponibles</th><th>Kg buenos</th><th class="fixed-column">Kg a reaplicar</th></tr></thead>
+                  <tbody id="transport-rows">
+                    <tr data-transport="CP-8801" data-available="7000"><td><input class="row-selector transport-selector" type="checkbox" aria-label="Seleccionar CP-8801"></td><td>CP-8801</td><td>02/05/26</td><td>04/05/26</td><td>Confitería</td><td class="number available-cell">7.000</td><td class="number">6.650</td><td class="fixed-column"><input class="kg-input transport-input" type="number" min="0" value="0" disabled aria-label="Kg a reaplicar CP-8801"></td></tr>
+                    <tr data-transport="CP-8808" data-available="11000"><td><input class="row-selector transport-selector" type="checkbox" aria-label="Seleccionar CP-8808"></td><td>CP-8808</td><td>10/05/26</td><td>12/05/26</td><td>Confitería</td><td class="number available-cell">11.000</td><td class="number">10.420</td><td class="fixed-column"><input class="kg-input transport-input" type="number" min="0" value="0" disabled aria-label="Kg a reaplicar CP-8808"></td></tr>
+                    <tr data-transport="CP-8817" data-available="9500"><td><input class="row-selector transport-selector" type="checkbox" aria-label="Seleccionar CP-8817"></td><td>CP-8817</td><td>20/05/26</td><td>22/05/26</td><td>Confitería</td><td class="number available-cell">9.500</td><td class="number">9.050</td><td class="fixed-column"><input class="kg-input transport-input" type="number" min="0" value="0" disabled aria-label="Kg a reaplicar CP-8817"></td></tr>
+                    <tr data-transport="CP-8830" data-available="6000"><td><input class="row-selector transport-selector" type="checkbox" aria-label="Seleccionar CP-8830"></td><td>CP-8830</td><td>01/06/26</td><td>03/06/26</td><td>Confitería</td><td class="number available-cell">6.000</td><td class="number">5.720</td><td class="fixed-column"><input class="kg-input transport-input" type="number" min="0" value="0" disabled aria-label="Kg a reaplicar CP-8830"></td></tr>
+                  </tbody>
+                </table>
+                <div class="empty-state" id="transport-empty">No hay Cartas de Porte disponibles para reaplicar.</div>
+              </div>
+            </section>
+          </div>
+
+          <div class="totals-row">
+            <label class="check-control"><input id="complete-kg" type="checkbox"> Completar kg a reaplicar</label>
+            <div class="totals" aria-live="polite">
+              <div class="total"><span class="total__label">Kg pendientes de reaplicar</span><strong class="total__value" id="pending-total">0 kg</strong></div>
+              <div class="total"><span class="total__label">Kg a reaplicar</span><strong class="total__value" id="to-apply-total">0 kg</strong></div>
+              <div class="total total--danger" id="balance-total"><span class="total__label">Saldo de kg</span><strong class="total__value" id="balance-value">0 kg</strong></div>
+              <div class="total"><span class="total__label">Kg a reaplicar buenos</span><strong class="total__value" id="good-total">0 kg</strong></div>
+            </div>
+          </div>
+          <div class="notification notification--success" id="notification" role="status"><span class="notification__icon" aria-hidden="true">✓</span><strong class="notification__label">Notificación:</strong><span class="notification__message"></span><button class="notification__close" type="button" aria-label="Cerrar notificación">×</button></div>
+        </div>
+
+        <footer class="modal__footer">
+          <button class="button button--secondary" type="button">Cerrar</button>
+          <button class="button button--primary" id="apply-button" type="button" disabled>Reaplicar</button>
+        </footer>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const formatKg = (value) => `${Number(value).toLocaleString('es-AR')} kg`;
+    const subcontractRows = [...document.querySelectorAll('[data-subcontract]')];
+    const transportRows = [...document.querySelectorAll('[data-transport]')];
+    const applyButton = document.querySelector('#apply-button');
+    const completeCheckbox = document.querySelector('#complete-kg');
+
+    function selectedSubcontract() {
+      return subcontractRows.find((row) => row.querySelector('.subcontract-selector').checked);
+    }
+
+    function selectedTransports() {
+      return transportRows.filter((row) => row.querySelector('.transport-selector').checked);
+    }
+
+    function updateTotals() {
+      const subcontract = selectedSubcontract();
+      const pending = subcontract ? Number(subcontract.dataset.pending) : 0;
+      const applied = selectedTransports().reduce((total, row) => total + Number(row.querySelector('.transport-input').value || 0), 0);
+      const balance = pending - applied;
+      document.querySelector('#pending-total').textContent = formatKg(pending);
+      document.querySelector('#to-apply-total').textContent = formatKg(applied);
+      document.querySelector('#balance-value').textContent = formatKg(balance);
+      document.querySelector('#balance-total').classList.toggle('total--danger', balance !== 0);
+      applyButton.disabled = !subcontract || applied <= 0 || balance < 0;
+    }
+
+    function enableSelectedRows() {
+      subcontractRows.forEach((row) => {
+        const selected = row.querySelector('.subcontract-selector').checked;
+        row.classList.toggle('is-selected', selected);
+        row.querySelector('.subcontract-input').disabled = !selected;
+      });
+      transportRows.forEach((row) => {
+        const selected = row.querySelector('.transport-selector').checked;
+        row.classList.toggle('is-selected', selected);
+        row.querySelector('.transport-input').disabled = !selected;
+      });
+      updateTotals();
+    }
+
+    function completeKg() {
+      const subcontract = selectedSubcontract();
+      if (!subcontract) return;
+      let remaining = Number(subcontract.querySelector('.subcontract-input').value || subcontract.dataset.pending);
+      transportRows.forEach((row) => {
+        const available = Number(row.dataset.available);
+        const input = row.querySelector('.transport-input');
+        const selector = row.querySelector('.transport-selector');
+        const amount = Math.min(available, remaining);
+        selector.checked = amount > 0;
+        input.disabled = amount === 0;
+        input.value = amount;
+        row.classList.toggle('is-selected', amount > 0);
+        remaining -= amount;
+      });
+      updateTotals();
+    }
+
+    document.querySelectorAll('.subcontract-selector, .transport-selector').forEach((selector) => selector.addEventListener('change', enableSelectedRows));
+    document.querySelectorAll('.kg-input').forEach((input) => input.addEventListener('input', updateTotals));
+    completeCheckbox.addEventListener('change', completeKg);
+
+    applyButton.addEventListener('click', () => {
+      const subcontract = selectedSubcontract();
+      const applied = selectedTransports().reduce((total, row) => total + Number(row.querySelector('.transport-input').value || 0), 0);
+      const pending = Number(subcontract.dataset.pending);
+      const remaining = pending - applied;
+      document.querySelector('#notification .notification__message').textContent = `Se aplicaron ${formatKg(applied)} al subcontrato ${subcontract.dataset.subcontract}.`;
+      document.querySelector('#notification').classList.add('is-visible');
+      subcontract.dataset.pending = remaining;
+      subcontract.querySelector('.pending-cell').textContent = Number(remaining).toLocaleString('es-AR');
+      selectedTransports().forEach((row) => {
+        const input = row.querySelector('.transport-input');
+        const availableCell = row.querySelector('.available-cell');
+        const available = Number(row.dataset.available) - Number(input.value || 0);
+        row.dataset.available = available;
+        availableCell.textContent = Number(available).toLocaleString('es-AR');
+        input.value = 0;
+        row.querySelector('.transport-selector').checked = false;
+        input.disabled = true;
+        if (available === 0) row.remove();
+      });
+      subcontract.querySelector('.subcontract-selector').checked = false;
+      subcontract.querySelector('.subcontract-input').disabled = true;
+      if (remaining === 0) subcontract.remove();
+      document.querySelector('#subcontract-empty').classList.toggle('is-visible', document.querySelectorAll('#subcontract-rows tr').length === 0);
+      document.querySelector('#transport-empty').classList.toggle('is-visible', document.querySelectorAll('#transport-rows tr').length === 0);
+      completeCheckbox.checked = false;
+      updateTotals();
+    });
+
+    document.querySelector('.notification__close').addEventListener('click', () => document.querySelector('#notification').classList.remove('is-visible'));
+  </script>
+</body>
+</html>
